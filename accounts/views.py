@@ -2,6 +2,8 @@ from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from django.contrib import auth
 
 from django.contrib.auth import (
     authenticate,
@@ -32,7 +34,6 @@ from accounts.models import UserProfile
 from django.contrib.auth.models import User
 
 from company.permissions import IsAllowedToWrite
-
 # Create your views here.
 
 
@@ -82,7 +83,17 @@ class UserLoginAPIView(APIView):
         serializer = UserLoginSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             new_data = serializer.data
-            return Response(new_data, status=HTTP_200_OK)
+            kwargs = {
+                'username': new_data['username'],
+                'password': new_data['password'],
+            }
+            user = auth.authenticate(**kwargs)
+            extra_data={}
+            auth.login(request, user)
+            token, _ = Token.objects.get_or_create(user=user)
+            extra_data['token'] = token.key
+
+            return Response(extra_data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 class UsersListAPIView(ListAPIView):

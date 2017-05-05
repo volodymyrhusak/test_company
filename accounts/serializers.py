@@ -111,6 +111,7 @@ class UserLoginSerializer(ModelSerializer):
     token = CharField(allow_blank=True, read_only=True)
     username = CharField()
     email = EmailField(label='Email Address')
+    password = CharField()
 
     class Meta:
         model = User
